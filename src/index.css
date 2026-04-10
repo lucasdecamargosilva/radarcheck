@@ -1,0 +1,189 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light mode — cores de trânsito */
+    --background: 0 0% 98%;
+    --foreground: 220 20% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 14%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 14%;
+    --primary: 142 71% 38%;        /* Verde semáforo */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 95%;
+    --secondary-foreground: 220 20% 14%;
+    --muted: 220 14% 95%;
+    --muted-foreground: 220 10% 44%;
+    --accent: 38 92% 50%;          /* Amarelo trânsito */
+    --accent-foreground: 220 20% 14%;
+    --destructive: 0 72% 51%;      /* Vermelho semáforo */
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 90%;
+    --input: 220 13% 90%;
+    --ring: 142 71% 38%;
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 220 20% 14%;
+    --sidebar-primary: 142 71% 38%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 95%;
+    --sidebar-accent-foreground: 220 20% 14%;
+    --sidebar-border: 220 13% 90%;
+    --sidebar-ring: 142 71% 38%;
+  }
+
+  .dark {
+    --background: 220 20% 9%;
+    --foreground: 210 20% 92%;
+    --card: 220 18% 12%;
+    --card-foreground: 210 20% 92%;
+    --popover: 220 18% 12%;
+    --popover-foreground: 210 20% 92%;
+    --primary: 142 71% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 18% 17%;
+    --secondary-foreground: 210 20% 92%;
+    --muted: 220 18% 17%;
+    --muted-foreground: 215 15% 55%;
+    --accent: 38 92% 50%;
+    --accent-foreground: 220 20% 14%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 18% 20%;
+    --input: 220 18% 20%;
+    --ring: 142 71% 45%;
+
+    --sidebar-background: 220 20% 10%;
+    --sidebar-foreground: 210 20% 92%;
+    --sidebar-primary: 142 71% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 18% 15%;
+    --sidebar-accent-foreground: 210 20% 92%;
+    --sidebar-border: 220 18% 20%;
+    --sidebar-ring: 142 71% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', sans-serif;
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer utilities {
+  /* Cards com destaque */
+  .glass {
+    @apply bg-card border border-border shadow-sm;
+  }
+  .glass-strong {
+    @apply bg-card border border-border shadow-md;
+  }
+
+  /* Shadows */
+  .shadow-soft {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .shadow-medium {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .shadow-strong {
+    box-shadow: 0 10px 30px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.06);
+  }
+  .shadow-glow {
+    box-shadow: 0 4px 20px rgba(22, 163, 74, 0.25), 0 2px 8px rgba(22, 163, 74, 0.10);
+  }
+
+  /* Gradientes — cores de trânsito */
+  .gradient-hero {
+    background: linear-gradient(135deg, #15803d 0%, #166534 50%, #14532d 100%);
+    color: white;
+  }
+  .gradient-hero * {
+    --tw-text-opacity: 1;
+  }
+  .gradient-primary {
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+  }
+  .gradient-accent {
+    background: linear-gradient(135deg, #16a34a, #15803d);
+  }
+  .gradient-card {
+    background: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 14% 97%) 100%);
+  }
+
+  /* Padrão de grade estrada */
+  .bg-grid-pattern {
+    background-image:
+      linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* Linhas de radar decorativas */
+  .radar-rings {
+    background-image:
+      radial-gradient(ellipse at 50% 50%, transparent 20%, rgba(255,255,255,0.03) 20.5%, transparent 21%),
+      radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(255,255,255,0.02) 40.5%, transparent 41%),
+      radial-gradient(ellipse at 50% 50%, transparent 60%, rgba(255,255,255,0.015) 60.5%, transparent 61%);
+  }
+
+  /* Noise texture */
+  .noise::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.3;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 256px 256px;
+  }
+  .noise { position: relative; }
+
+  /* Stats */
+  .stat-number {
+    @apply text-4xl md:text-5xl font-bold;
+    font-family: 'Outfit', sans-serif;
+    letter-spacing: -0.03em;
+  }
+  .stat-label {
+    @apply text-sm text-muted-foreground font-medium;
+  }
+
+  /* Trust badge — verde trânsito */
+  .trust-badge {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium border border-primary/20;
+  }
+
+  /* Pulse glow verde */
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(22, 163, 74, 0); }
+  }
+  .pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  /* Faixa de semáforo decorativa */
+  .traffic-stripe {
+    background: repeating-linear-gradient(
+      90deg,
+      #16a34a 0px, #16a34a 33.33%,
+      #eab308 33.33%, #eab308 66.66%,
+      #ef4444 66.66%, #ef4444 100%
+    );
+    height: 4px;
+  }
+}
