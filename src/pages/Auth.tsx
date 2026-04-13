@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Shield, Mail, Lock, User, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
@@ -29,6 +31,7 @@ export default function Auth() {
     password: "",
     name: "",
   });
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -90,6 +93,15 @@ export default function Auth() {
       } else {
         // Validate signup
         signupSchema.parse(formData);
+
+        if (!acceptedTerms) {
+          toast({
+            title: "Termos obrigatórios",
+            description: "Você precisa aceitar os Termos de Uso e a Política de Privacidade",
+            variant: "destructive",
+          });
+          return;
+        }
 
         const redirectUrl = `${window.location.origin}/`;
 
@@ -307,10 +319,31 @@ export default function Auth() {
                 />
               </div>
 
+              {!isLogin && (
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="terms"
+                    checked={acceptedTerms}
+                    onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
+                    className="mt-0.5 border-white/20 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                  />
+                  <label htmlFor="terms" className="text-xs text-white/50 font-body leading-relaxed cursor-pointer">
+                    Li e aceito os{" "}
+                    <Link to="/termos-de-uso" target="_blank" className="text-primary hover:underline">
+                      Termos de Uso
+                    </Link>{" "}
+                    e a{" "}
+                    <Link to="/privacidade" target="_blank" className="text-primary hover:underline">
+                      Política de Privacidade
+                    </Link>
+                  </label>
+                </div>
+              )}
+
               <Button
                 type="submit"
                 className="w-full h-11 gradient-primary text-white font-body font-medium shadow-glow hover:opacity-90 transition-opacity"
-                disabled={loading}
+                disabled={loading || (!isLogin && !acceptedTerms)}
               >
                 {loading ? (
                   "Aguarde..."

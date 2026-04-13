@@ -136,6 +136,20 @@ const Index = () => {
   };
 
   const handleConsultar = async () => {
+    // Exigir login
+    if (!user) {
+      toast({ title: "Cadastro necessário", description: "Crie sua conta gratuita para consultar. Você tem 1 consulta grátis!", variant: "destructive" });
+      navigate("/auth");
+      return;
+    }
+
+    // Verificar limite de consultas
+    await checkLimit();
+    if (limit && !limit.pode_consultar) {
+      setShowUpgradeModal(true);
+      return;
+    }
+
     const formData = { numeroSerie, numeroAuto, dataAutuacao, localInstrumento, nomeAutuado, documentoAutuado, marcaModelo, uf, cidade };
     try {
       consultaSchema.parse(formData);
@@ -203,6 +217,9 @@ const Index = () => {
           validade_vencida: false,
         };
       }
+      // Incrementar uso da consulta
+      await incrementUsage(false);
+
       setResultadoConsulta(data);
       setShowResultado(true);
       localStorage.setItem("radarcheck_has_consulted", "true");
