@@ -276,7 +276,12 @@ const Dashboard = () => {
               </Button>
             </div>
             {limit && !limit.pode_consultar && (
-              <p className="text-xs text-red-500 mt-2">Você atingiu o limite de consultas do plano gratuito.</p>
+              <div className="mt-3 p-3 rounded-lg border border-amber-200 bg-amber-50">
+                <p className="text-xs text-amber-800 font-medium mb-2">Você atingiu o limite de consultas do plano gratuito.</p>
+                <Button size="sm" className="h-8 text-xs gradient-primary text-white border-0 w-full" onClick={() => setShowUpgradeModal(true)}>
+                  Desbloquear mais consultas
+                </Button>
+              </div>
             )}
 
             {/* Resultado inline */}
