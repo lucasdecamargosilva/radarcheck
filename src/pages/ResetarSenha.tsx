@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Shield, Lock, ArrowRight } from "lucide-react";
+import { CircleCheckBig, Lock, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
@@ -110,8 +110,8 @@ export default function ResetarSenha() {
         <div className="absolute inset-0 bg-grid-pattern opacity-[0.03]" />
         <div className="absolute inset-0 radar-rings opacity-15" />
         <div className="text-center relative z-10">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full glass shadow-glow mb-4">
-            <Shield className="w-6 h-6 text-primary" />
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-green-500 shadow-glow mb-4">
+            <CircleCheckBig className="w-6 h-6 text-white" />
           </div>
           <p className="font-body text-white/40">Verificando link de recuperacao...</p>
         </div>
@@ -138,9 +138,9 @@ export default function ResetarSenha() {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-            className="inline-flex items-center justify-center w-16 h-16 rounded-full glass shadow-glow mb-5"
+            className="inline-flex items-center justify-center w-16 h-16 rounded-lg bg-green-500 shadow-glow mb-5"
           >
-            <Shield className="w-8 h-8 text-primary" />
+            <CircleCheckBig className="w-8 h-8 text-white" />
           </motion.div>
           <h1 className="font-display text-3xl font-bold text-white mb-2">Nova Senha</h1>
           <p className="font-body text-sm text-white/40">

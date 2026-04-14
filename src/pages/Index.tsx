@@ -7,12 +7,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Link as RouterLink } from "react-router-dom";
 import { z } from "zod";
 import {
   CheckCircle2,
   FileText,
   Search,
   Shield,
+  CircleCheckBig,
   Lock,
   LogOut,
   LogIn,
@@ -34,6 +36,8 @@ import {
   ScanLine,
   Activity
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { PasswordInput } from "@/components/ui/password-input";
 import { useToast } from "@/hooks/use-toast";
 import { RecursoGenerator } from "@/components/RecursoGenerator";
 import { MultaUpload } from "@/components/MultaUpload";
@@ -94,6 +98,44 @@ const Index = () => {
   const [cidade, setCidade] = useState("");
 
   const [resultadoConsulta, setResultadoConsulta] = useState<any>(null);
+
+  // Cadastro inline
+  const [signupName, setSignupName] = useState("");
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [signupTerms, setSignupTerms] = useState(false);
+  const [signupLoading, setSignupLoading] = useState(false);
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!signupName || !signupEmail || !signupPassword) {
+      toast({ title: "Preencha todos os campos", variant: "destructive" }); return;
+    }
+    if (!signupTerms) {
+      toast({ title: "Aceite os termos", description: "Você precisa aceitar os Termos de Uso e Política de Privacidade", variant: "destructive" }); return;
+    }
+    if (signupPassword.length < 6) {
+      toast({ title: "Senha fraca", description: "A senha deve ter no mínimo 6 caracteres", variant: "destructive" }); return;
+    }
+    setSignupLoading(true);
+    try {
+      const { error } = await supabase.auth.signUp({
+        email: signupEmail,
+        password: signupPassword,
+        options: { emailRedirectTo: `${window.location.origin}/dashboard`, data: { name: signupName } },
+      });
+      if (error) {
+        toast({ title: "Erro ao criar conta", description: error.message.includes("already registered") ? "Este email já está cadastrado" : error.message, variant: "destructive" });
+        return;
+      }
+      toast({ title: "Conta criada!", description: "Você já pode fazer login" });
+      navigate("/auth");
+    } catch (error) {
+      toast({ title: "Erro", description: "Não foi possível criar a conta", variant: "destructive" });
+    } finally {
+      setSignupLoading(false);
+    }
+  };
 
   const handleMultaDataExtracted = (data: any) => {
     if (data.numero_serie) setNumeroSerie(data.numero_serie);
@@ -163,13 +205,23 @@ const Index = () => {
     setShowResultado(false);
     setResultadoConsulta(null);
     try {
-      const { data: radares, error } = await supabase
-        .from("radares")
-        .select("*")
-        .eq("numero_serie", numeroSerie.trim());
-      if (error) throw error;
+      // Busca flexível: com e sem barra/espaços
+      const s = numeroSerie.trim();
+      const limpo = s.replace(/[\/ \-]/g, "");
+      let radares: any[] = [];
+      let { data: r1 } = await supabase.from("radares").select("*").eq("numero_serie", s);
+      if (r1 && r1.length > 0) { radares = r1; }
+      else {
+        let { data: r2 } = await supabase.from("radares").select("*").ilike("numero_serie", `%${limpo}%`);
+        if (r2 && r2.length > 0) { radares = r2; }
+        else if (limpo.length >= 6) {
+          const comBarra = limpo.slice(0, 6) + "/" + limpo.slice(6);
+          let { data: r3 } = await supabase.from("radares").select("*").eq("numero_serie", comBarra);
+          if (r3 && r3.length > 0) { radares = r3; }
+        }
+      }
       let data;
-      if (radares && radares.length > 0) {
+      if (radares.length > 0) {
         const r = radares[0];
         // Verificar se a validade do certificado está vencida
         let validadeVencida = false;
@@ -243,8 +295,8 @@ const Index = () => {
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3 group">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 border border-primary/20 group-hover:shadow-glow transition-shadow">
-                <Shield className="h-5 w-5 text-primary" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-500">
+                <CircleCheckBig className="h-5 w-5 text-white" />
               </div>
               <div>
                 <h1 className="font-display text-lg font-bold text-foreground tracking-tight">RadarCheck</h1>
@@ -280,103 +332,131 @@ const Index = () => {
       </motion.header>
 
       {/* ── Hero ── */}
-      <section className="relative overflow-hidden gradient-hero py-24 md:py-36 noise">
+      <section className="relative overflow-hidden gradient-hero py-10 md:py-14 noise">
         <div className="absolute inset-0 bg-grid-pattern" />
-        <div className="absolute inset-0 radar-rings opacity-50" />
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-white/5 rounded-full blur-[120px] pointer-events-none" />
 
         <div className="container relative mx-auto px-4">
-          <div className="mx-auto max-w-5xl">
+          <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center max-w-5xl mx-auto">
+            {/* Esquerda — Headline */}
             <motion.div
               initial="hidden"
               animate="show"
               variants={stagger}
-              className="text-center mb-14"
             >
-              <motion.div variants={fadeUp} className="mb-6">
-                <Badge className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-white text-xs font-medium border border-white/20">
-                  <Activity className="w-3.5 h-3.5" />
-                  Consulta em tempo real ao Inmetro
-                </Badge>
-              </motion.div>
-              <motion.h1 variants={fadeUp} className="font-display text-4xl md:text-6xl lg:text-7xl font-bold leading-[1.08] mb-6 text-white">
-                Descubra em segundos se sua
+              <motion.h1 variants={fadeUp} className="font-display text-3xl md:text-5xl font-bold leading-[1.1] mb-3 text-white">
+                Descubra se sua
                 <span className="block bg-gradient-to-r from-yellow-300 via-amber-300 to-yellow-400 bg-clip-text text-transparent">
                   multa de radar é válida
                 </span>
               </motion.h1>
-              <motion.p variants={fadeUp} className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto leading-relaxed">
-                Faça upload da multa, nós lemos automaticamente e verificamos o radar no Inmetro. Tudo gratuito.
+              <motion.p variants={fadeUp} className="text-sm md:text-base text-white/70 max-w-sm leading-relaxed mb-4">
+                Verificamos no Inmetro se o radar que te multou está com a certificação em dia. Cadastre-se e ganhe 1 consulta grátis.
               </motion.p>
+              <motion.div variants={fadeUp} className="flex flex-wrap gap-3 text-xs text-white/60">
+                <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-400" /> 32 mil+ radares</span>
+                <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-400" /> 26 estados</span>
+                <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-400" /> Resultado na hora</span>
+              </motion.div>
             </motion.div>
 
-            {/* Consulta Card */}
+            {/* Direita — Formulário */}
             <motion.div
               id="form-consulta"
               initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.35 }}
-              className="mx-auto max-w-3xl"
+              transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <Card className="bg-white shadow-strong border-0 overflow-hidden">
-                <CardContent className="p-6 md:p-8">
-                  <MultaUpload onDataExtracted={handleMultaDataExtracted} />
-
-                  <div className="mt-6 pt-6 border-t border-border/50">
-                    <h3 className="font-display text-lg font-semibold mb-3 text-foreground flex items-center gap-2">
-                      <Search className="h-5 w-5 text-primary" />
-                      Consultar Radar no Inmetro
-                    </h3>
+              {user ? (
+                <Card className="bg-white shadow-strong border-0">
+                  <CardContent className="p-5">
+                    <h3 className="font-display text-base font-bold text-foreground mb-3">Consultar Radar</h3>
                     <div>
-                      <Label htmlFor="numeroSerie" className="text-sm text-muted-foreground">Número de Série do Radar *</Label>
-                      <div className="flex flex-col sm:flex-row gap-3 mt-1">
+                      <Label htmlFor="numeroSerie" className="text-sm text-muted-foreground">Número de Série</Label>
+                      <div className="flex gap-2 mt-1">
                         <Input
                           id="numeroSerie"
-                          placeholder="Ex: 150616/1782"
-                          className="h-12 text-base flex-1 bg-secondary/30 border-border/50 focus:border-primary/50"
+                          placeholder="Ex: 1506161782"
+                          className="h-11 bg-secondary/30 border-border"
                           value={numeroSerie}
                           onChange={(e) => setNumeroSerie(e.target.value)}
                           onKeyDown={(e) => e.key === 'Enter' && handleConsultar()}
                         />
                         <Button
-                          size="lg"
-                          className="h-12 px-8 font-semibold gradient-primary text-primary-foreground border-0 shadow-glow"
+                          className="h-11 px-5 gradient-primary text-white border-0 shrink-0"
                           onClick={handleConsultar}
                           disabled={isLoading || !numeroSerie.trim()}
                         >
-                          {isLoading ? (
-                            <>
-                              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                              Consultando...
-                            </>
-                          ) : (
-                            <>
-                              <Search className="mr-2 h-5 w-5" />
-                              Verificar Radar
-                            </>
-                          )}
+                          {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                         </Button>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-2">O número de série está na notificação de multa.</p>
+                      <p className="text-xs text-muted-foreground mt-1.5">O número está na notificação de multa</p>
                     </div>
-                  </div>
-
-                  <div className="mt-6 flex flex-wrap items-center justify-center gap-6 text-xs text-green-800">
-                    <div className="flex items-center gap-1.5">
-                      <Lock className="w-3.5 h-3.5 text-green-700" />
-                      <span>Consulta gratuita e segura</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Shield className="w-3.5 h-3.5 text-green-700" />
-                      <span>Dados oficiais do Inmetro</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Zap className="w-3.5 h-3.5 text-green-700" />
-                      <span>Resultado instantâneo</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              ) : (
+                /* Deslogado: formulário de cadastro */
+                <Card className="bg-white shadow-strong border-0">
+                  <CardContent className="p-5">
+                    <h3 className="font-display text-base font-bold text-foreground mb-0.5">Crie sua conta grátis</h3>
+                    <p className="text-xs text-muted-foreground mb-3">Ganhe 1 consulta gratuita</p>
+                    <form onSubmit={handleSignup} className="space-y-2.5">
+                      <div>
+                        <Input
+                          placeholder="Seu nome"
+                          value={signupName}
+                          onChange={(e) => setSignupName(e.target.value)}
+                          className="h-9 text-sm bg-secondary/30 border-border"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Input
+                          type="email"
+                          placeholder="Seu e-mail"
+                          value={signupEmail}
+                          onChange={(e) => setSignupEmail(e.target.value)}
+                          className="h-9 text-sm bg-secondary/30 border-border"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <PasswordInput
+                          placeholder="Crie uma senha"
+                          value={signupPassword}
+                          onChange={(e) => setSignupPassword(e.target.value)}
+                          className="h-9 text-sm bg-secondary/30 border-border"
+                          required
+                        />
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <Checkbox
+                          id="hero-terms"
+                          checked={signupTerms}
+                          onCheckedChange={(c) => setSignupTerms(c === true)}
+                          className="mt-0.5"
+                        />
+                        <label htmlFor="hero-terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+                          Aceito os{" "}
+                          <Link to="/termos-de-uso" target="_blank" className="text-primary hover:underline">Termos</Link>
+                          {" "}e a{" "}
+                          <Link to="/privacidade" target="_blank" className="text-primary hover:underline">Privacidade</Link>
+                        </label>
+                      </div>
+                      <Button
+                        type="submit"
+                        className="w-full h-9 text-sm gradient-primary text-white border-0 font-semibold shadow-glow"
+                        disabled={signupLoading || !signupTerms}
+                      >
+                        {signupLoading ? "Criando..." : "Cadastrar e consultar grátis"}
+                      </Button>
+                    </form>
+                    <p className="text-[11px] text-muted-foreground text-center mt-2">
+                      Já tem conta?{" "}
+                      <button onClick={() => navigate("/auth")} className="text-primary hover:underline font-medium">Entrar</button>
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Resultado da Consulta */}
               {showResultado && resultadoConsulta && (
@@ -797,8 +877,8 @@ const Index = () => {
           <div className="grid gap-8 md:grid-cols-4">
             <div>
               <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 border border-primary/20">
-                  <Shield className="h-5 w-5 text-primary" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-500">
+                  <CircleCheckBig className="h-5 w-5 text-white" />
                 </div>
                 <span className="font-display text-xl font-bold text-foreground">RadarCheck</span>
               </div>

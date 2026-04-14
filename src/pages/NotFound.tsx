@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { motion } from "framer-motion";
-import { Shield, Home } from "lucide-react";
+import { CircleCheckBig, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const NotFound = () => {
@@ -17,8 +17,8 @@ const NotFound = () => {
       <header className="glass-strong shadow-soft relative z-10">
         <div className="container mx-auto px-4 py-4">
           <Link to="/" className="flex items-center gap-3 group w-fit">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 group-hover:shadow-glow transition-all duration-300">
-              <Shield className="h-5 w-5 text-primary" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500 group-hover:shadow-glow transition-all duration-300">
+              <CircleCheckBig className="h-5 w-5 text-white" />
             </div>
             <div>
               <h1 className="text-xl font-bold font-display text-foreground">RadarCheck</h1>

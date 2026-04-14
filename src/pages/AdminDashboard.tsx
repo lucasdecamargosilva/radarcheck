@@ -10,7 +10,7 @@ import {
   TrendingUp,
   Activity,
   FileText,
-  Shield,
+  CircleCheckBig,
   ArrowLeft,
   Crown,
   Loader2,
@@ -185,8 +185,8 @@ const AdminDashboard = () => {
                 Voltar
               </Button>
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-primary shadow-glow">
-                  <Shield className="h-6 w-6 text-white" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500 shadow-glow">
+                  <CircleCheckBig className="h-6 w-6 text-white" />
                 </div>
                 <div>
                   <h1 className="font-display text-xl font-bold text-foreground flex items-center gap-2 tracking-tight">

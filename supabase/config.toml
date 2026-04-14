@@ -1,0 +1,16 @@
+project_id = "asgzfuofjvrfbwlkmbpv"
+
+[functions.consultar-inmetro]
+verify_jwt = false
+
+[functions.send-password-recovery]
+verify_jwt = false
+
+[functions.analyze-multa]
+verify_jwt = false
+
+[functions.health-check-inmetro]
+verify_jwt = false
+
+[functions.register-disclaimer-acceptance]
+verify_jwt = false

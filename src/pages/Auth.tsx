@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Shield, Mail, Lock, User, ArrowRight } from "lucide-react";
+import { CircleCheckBig, Mail, Lock, User, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +39,7 @@ export default function Auth() {
     // Check if user is already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/");
+        navigate("/dashboard");
       }
     });
 
@@ -47,7 +47,7 @@ export default function Auth() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (session && event === "SIGNED_IN") {
-          navigate("/");
+          navigate("/dashboard");
         }
       }
     );
@@ -166,13 +166,11 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070b14] flex">
+    <div className="min-h-screen bg-background flex">
       {/* Left panel - desktop only */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center">
-        {/* Background layers */}
-        <div className="absolute inset-0 bg-grid-pattern opacity-[0.03]" />
-        <div className="absolute inset-0 radar-rings opacity-20" />
-        <div className="absolute inset-0 gradient-hero opacity-40" />
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center gradient-hero">
+        <div className="absolute inset-0 bg-grid-pattern" />
+        <div className="absolute inset-0 radar-rings opacity-30" />
 
         <motion.div
           initial={{ opacity: 0, x: -40 }}
@@ -184,35 +182,33 @@ export default function Auth() {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
-            className="inline-flex items-center justify-center w-20 h-20 rounded-full glass shadow-glow mb-8"
+            className="inline-flex items-center justify-center w-20 h-20 rounded-lg bg-green-500 shadow-glow mb-8"
           >
-            <Shield className="w-10 h-10 text-primary" />
+            <CircleCheckBig className="w-10 h-10 text-white" />
           </motion.div>
 
           <h1 className="font-display text-5xl font-bold text-white mb-4 tracking-tight">
-            Radar<span className="text-primary">Check</span>
+            Radar<span className="text-yellow-300">Check</span>
           </h1>
-          <p className="font-body text-lg text-white/50 leading-relaxed">
-            Monitore veiculos, proteja seu patrimonio e tenha controle total com inteligencia em tempo real.
+          <p className="font-body text-lg text-white/70 leading-relaxed">
+            Verifique se o radar que te multou está com a certificação em dia no Inmetro.
           </p>
 
-          {/* Decorative floating rings */}
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-            className="absolute -bottom-32 -left-32 w-64 h-64 rounded-full border border-primary/10"
+            className="absolute -bottom-32 -left-32 w-64 h-64 rounded-full border border-white/10"
           />
           <motion.div
             animate={{ rotate: -360 }}
             transition={{ duration: 80, repeat: Infinity, ease: "linear" }}
-            className="absolute -top-24 -right-24 w-48 h-48 rounded-full border border-green-500/10"
+            className="absolute -top-24 -right-24 w-48 h-48 rounded-full border border-white/5"
           />
         </motion.div>
       </div>
 
       {/* Right panel - form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8 relative">
-        <div className="absolute inset-0 bg-grid-pattern opacity-[0.02] lg:hidden" />
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8 relative bg-background">
 
         <motion.div
           variants={stagger}
@@ -222,30 +218,30 @@ export default function Auth() {
         >
           {/* Mobile branding */}
           <motion.div variants={fadeUp} className="text-center mb-8 lg:hidden">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full glass shadow-glow mb-4">
-              <Shield className="w-7 h-7 text-primary" />
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-green-500 mb-4">
+              <CircleCheckBig className="w-7 h-7 text-white" />
             </div>
-            <h1 className="font-display text-3xl font-bold text-white">
+            <h1 className="font-display text-3xl font-bold text-foreground">
               Radar<span className="text-primary">Check</span>
             </h1>
           </motion.div>
 
           {/* Heading */}
           <motion.div variants={fadeUp} className="mb-6">
-            <h2 className="font-display text-2xl font-semibold text-white">
+            <h2 className="font-display text-2xl font-semibold text-foreground">
               {isLogin ? "Bem-vindo de volta" : "Crie sua conta"}
             </h2>
-            <p className="font-body text-sm text-white/40 mt-1">
+            <p className="font-body text-sm text-muted-foreground mt-1">
               {isLogin
                 ? "Entre com suas credenciais para continuar"
-                : "Preencha os dados para comecar"}
+                : "Cadastre-se e receba uma consulta grátis"}
             </p>
           </motion.div>
 
-          {/* Glass card */}
+          {/* Form card */}
           <motion.div
             variants={fadeUp}
-            className="glass-strong rounded-2xl shadow-medium p-8 border border-white/[0.06]"
+            className="bg-card rounded-2xl shadow-strong p-8 border border-border"
           >
             <form onSubmit={handleSubmit} className="space-y-5">
               {!isLogin && (
@@ -255,8 +251,8 @@ export default function Auth() {
                   exit={{ opacity: 0, height: 0 }}
                   className="space-y-2"
                 >
-                  <Label htmlFor="name" className="flex items-center gap-2 text-white/70 font-body text-sm">
-                    <User className="w-4 h-4 text-primary/70" />
+                  <Label htmlFor="name" className="flex items-center gap-2 text-muted-foreground font-body text-sm">
+                    <User className="w-4 h-4 text-primary" />
                     Nome completo
                   </Label>
                   <Input
@@ -268,14 +264,14 @@ export default function Auth() {
                       setFormData({ ...formData, name: e.target.value })
                     }
                     required={!isLogin}
-                    className="bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/25 focus:border-primary/50 focus:ring-primary/20"
+                    className="bg-secondary/50 border-border text-foreground placeholder:text-muted-foreground/50 focus:border-primary/50 focus:ring-primary/20"
                   />
                 </motion.div>
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="email" className="flex items-center gap-2 text-white/70 font-body text-sm">
-                  <Mail className="w-4 h-4 text-primary/70" />
+                <Label htmlFor="email" className="flex items-center gap-2 text-muted-foreground font-body text-sm">
+                  <Mail className="w-4 h-4 text-primary" />
                   Email
                 </Label>
                 <Input
@@ -287,21 +283,21 @@ export default function Auth() {
                     setFormData({ ...formData, email: e.target.value })
                   }
                   required
-                  className="bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/25 focus:border-primary/50 focus:ring-primary/20"
+                  className="bg-secondary/50 border-border text-foreground placeholder:text-muted-foreground/50 focus:border-primary/50 focus:ring-primary/20"
                 />
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="flex items-center gap-2 text-white/70 font-body text-sm">
-                    <Lock className="w-4 h-4 text-primary/70" />
+                  <Label htmlFor="password" className="flex items-center gap-2 text-muted-foreground font-body text-sm">
+                    <Lock className="w-4 h-4 text-primary" />
                     Senha
                   </Label>
                   {isLogin && (
                     <button
                       type="button"
                       onClick={() => navigate("/recuperar-senha")}
-                      className="text-xs text-primary/70 hover:text-primary transition-colors font-body"
+                      className="text-xs text-primary hover:underline transition-colors font-body"
                     >
                       Esqueceu sua senha?
                     </button>
@@ -315,7 +311,7 @@ export default function Auth() {
                     setFormData({ ...formData, password: e.target.value })
                   }
                   required
-                  className="bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/25 focus:border-primary/50 focus:ring-primary/20"
+                  className="bg-secondary/50 border-border text-foreground placeholder:text-muted-foreground/50 focus:border-primary/50 focus:ring-primary/20"
                 />
               </div>
 
@@ -325,9 +321,9 @@ export default function Auth() {
                     id="terms"
                     checked={acceptedTerms}
                     onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
-                    className="mt-0.5 border-white/20 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                    className="mt-0.5 border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                   />
-                  <label htmlFor="terms" className="text-xs text-white/50 font-body leading-relaxed cursor-pointer">
+                  <label htmlFor="terms" className="text-xs text-muted-foreground font-body leading-relaxed cursor-pointer">
                     Li e aceito os{" "}
                     <Link to="/termos-de-uso" target="_blank" className="text-primary hover:underline">
                       Termos de Uso
@@ -342,7 +338,7 @@ export default function Auth() {
 
               <Button
                 type="submit"
-                className="w-full h-11 gradient-primary text-white font-body font-medium shadow-glow hover:opacity-90 transition-opacity"
+                className="w-full h-11 gradient-primary text-primary-foreground font-body font-medium shadow-glow hover:opacity-90 transition-opacity"
                 disabled={loading || (!isLogin && !acceptedTerms)}
               >
                 {loading ? (
@@ -360,7 +356,7 @@ export default function Auth() {
               <button
                 type="button"
                 onClick={() => setIsLogin(!isLogin)}
-                className="text-sm text-white/40 hover:text-white/70 transition-colors font-body"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors font-body"
               >
                 {isLogin ? (
                   <>
@@ -380,7 +376,7 @@ export default function Auth() {
           <motion.div variants={fadeUp} className="mt-6 text-center">
             <button
               onClick={() => navigate("/")}
-              className="text-sm text-white/30 hover:text-primary/70 transition-colors font-body"
+              className="text-sm text-muted-foreground hover:text-primary transition-colors font-body"
             >
               Voltar para a pagina inicial
             </button>

@@ -1,7 +1,6 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { Zap, Crown, TrendingUp } from "lucide-react";
+import { Lock, CheckCircle2, Zap, Crown } from "lucide-react";
 
 interface UpgradeModalProps {
   open: boolean;
@@ -11,70 +10,77 @@ interface UpgradeModalProps {
   totalConsultations: number;
 }
 
-const UpgradeModal = ({ 
-  open, 
-  onOpenChange, 
-  currentPlan, 
-  usedConsultations, 
-  totalConsultations 
-}: UpgradeModalProps) => {
-  const navigate = useNavigate();
+const MERCADO_PAGO_LINK = "https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=SEU_PREFERENCE_ID_AQUI";
 
-  const handleUpgrade = () => {
-    onOpenChange(false);
-    navigate("/planos");
-  };
-
+const UpgradeModal = ({ open, onOpenChange }: UpgradeModalProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <Zap className="h-6 w-6 text-primary" />
+      <DialogContent className="sm:max-w-lg p-6">
+        <div className="text-center mb-4">
+          <div className="mx-auto w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center mb-3">
+            <Lock className="h-5 w-5 text-amber-600" />
           </div>
-          <DialogTitle className="text-center text-2xl">
-            Limite de Consultas Atingido
-          </DialogTitle>
-          <DialogDescription className="text-center text-base">
-            Você utilizou {usedConsultations} de {totalConsultations} consultas do plano{" "}
-            <span className="font-semibold">{currentPlan}</span> este mês.
-          </DialogDescription>
-        </DialogHeader>
+          <h3 className="font-display font-bold text-foreground text-lg">Limite atingido</h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            Você usou sua consulta grátis. Escolha um plano para continuar:
+          </p>
+        </div>
 
-        <div className="space-y-3 my-6">
-          <div className="p-4 rounded-lg border border-primary/20 bg-primary/5">
-            <div className="flex items-start gap-3">
-              <Crown className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-              <div>
-                <h4 className="font-semibold mb-1">RadarCheck+ (R$ 19,90/mês)</h4>
-                <p className="text-sm text-muted-foreground">
-                  Consultas ilimitadas + recursos avançados
-                </p>
+        <div className="space-y-3">
+          {/* Recurso Avulso */}
+          <div className="border-2 border-primary rounded-xl p-4 relative">
+            <div className="absolute -top-2.5 left-4">
+              <span className="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full">MAIS POPULAR</span>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                  <Zap className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-display font-bold text-foreground text-sm">Consulta Avulsa</p>
+                  <p className="text-xs text-muted-foreground">1 consulta + recurso em PDF</p>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <p className="font-display font-bold text-foreground">R$ 14,90</p>
+                <p className="text-[10px] text-muted-foreground">pagamento único</p>
               </div>
             </div>
+            <Button
+              className="w-full mt-3 gradient-primary text-white border-0 h-9 text-sm"
+              onClick={() => window.open(MERCADO_PAGO_LINK, "_blank")}
+            >
+              Desbloquear consulta
+            </Button>
           </div>
 
-          <div className="p-4 rounded-lg border border-border bg-muted/30">
-            <div className="flex items-start gap-3">
-              <TrendingUp className="h-5 w-5 text-foreground shrink-0 mt-0.5" />
-              <div>
-                <h4 className="font-semibold mb-1">Pay-per-Use (R$ 4,90)</h4>
-                <p className="text-sm text-muted-foreground">
-                  Pague apenas por esta consulta adicional
-                </p>
+          {/* Plano Pro */}
+          <div className="border border-border rounded-xl p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-50">
+                  <Crown className="h-5 w-5 text-amber-600" />
+                </div>
+                <div>
+                  <p className="font-display font-bold text-foreground text-sm">RadarCheck Pro</p>
+                  <p className="text-xs text-muted-foreground">Consultas ilimitadas</p>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <p className="font-display font-bold text-foreground">R$ 19,90</p>
+                <p className="text-[10px] text-muted-foreground">/mês</p>
               </div>
             </div>
+            <Button variant="outline" className="w-full mt-3 h-9 text-sm" disabled>
+              Em breve
+            </Button>
           </div>
         </div>
 
-        <div className="flex flex-col gap-2">
-          <Button onClick={handleUpgrade} size="lg" className="w-full">
-            Ver Planos e Preços
-          </Button>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            Voltar
-          </Button>
-        </div>
+        <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="w-full mt-2 text-muted-foreground text-xs">
+          Fechar
+        </Button>
       </DialogContent>
     </Dialog>
   );

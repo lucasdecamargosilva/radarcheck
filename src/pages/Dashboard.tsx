@@ -3,31 +3,32 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
-  FileText,
-  Calendar,
   CheckCircle2,
   XCircle,
   AlertTriangle,
-  TrendingUp,
   Download,
-  Eye,
-  Shield,
+  CircleCheckBig,
   LogOut,
-  User,
   Home,
-  Crown,
-  Zap,
   Trash2,
   AlertCircle,
+  RefreshCw,
+  Search,
+  Clock,
+  Loader2,
+  Crown,
   Activity,
-  RefreshCw
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { RecursoGenerator } from "@/components/RecursoGenerator";
 import { useConsultationLimit } from "@/hooks/useConsultationLimit";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
+import UpgradeModal from "@/components/UpgradeModal";
 
 interface ConsultaResultado {
   status_aprovado: boolean;
@@ -52,19 +53,6 @@ interface Consulta {
   radar_id: string | null;
 }
 
-const stagger = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.08 },
-  },
-};
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
-};
-
 const Dashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -75,16 +63,17 @@ const Dashboard = () => {
   const [selectedConsulta, setSelectedConsulta] = useState<Consulta | null>(null);
   const [showRecursoGenerator, setShowRecursoGenerator] = useState(false);
   const [retryingConsultas, setRetryingConsultas] = useState<Set<string>>(new Set());
-  const { limit } = useConsultationLimit();
+  const [numeroSerie, setNumeroSerie] = useState("");
+  const [isConsultando, setIsConsultando] = useState(false);
+  const [resultadoConsulta, setResultadoConsulta] = useState<any>(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const { limit, checkLimit, incrementUsage } = useConsultationLimit();
   const { isAdmin } = useAdminCheck();
 
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        navigate("/auth");
-        return;
-      }
+      if (!session?.user) { navigate("/auth"); return; }
       setUser(session.user);
       await loadProfile(session.user.id);
       await loadConsultas(session.user.id);
@@ -94,12 +83,7 @@ const Dashboard = () => {
 
   const loadProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .single();
-
+      const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single();
       if (error) throw error;
       setProfile(data);
     } catch (error: any) {
@@ -110,505 +94,311 @@ const Dashboard = () => {
   const loadConsultas = async (userId: string) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("consultas")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false });
-
+      const { data, error } = await supabase.from("consultas").select("*").eq("user_id", userId).order("created_at", { ascending: false });
       if (error) throw error;
       setConsultas((data || []) as any);
     } catch (error: any) {
-      toast({
-        title: "Erro ao carregar consultas",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Erro ao carregar", description: error.message, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/");
-  };
+  const handleLogout = async () => { await supabase.auth.signOut(); navigate("/"); };
 
   const handleGerarRecurso = async (consulta: Consulta) => {
-    // Fetch radar details if we have a radar_id
     let radarData = null;
     if (consulta.radar_id) {
-      const { data } = await supabase
-        .from("radares")
-        .select("*")
-        .eq("id", consulta.radar_id)
-        .single();
+      const { data } = await supabase.from("radares").select("*").eq("id", consulta.radar_id).single();
       radarData = data;
     }
-
-    // Store both consulta and radar data
     setSelectedConsulta({ ...consulta, radarData } as any);
     setShowRecursoGenerator(true);
   };
 
   const handleDeleteConsulta = async (consultaId: string) => {
-    if (!window.confirm("Tem certeza que deseja excluir esta consulta? Esta acao nao pode ser desfeita.\n\nOBS: Excluir a consulta NAO afeta seu limite mensal de consultas.")) {
-      return;
-    }
-
+    if (!window.confirm("Excluir esta consulta do histórico?")) return;
     try {
-      const { error } = await supabase
-        .from("consultas")
-        .delete()
-        .eq("id", consultaId);
-
+      const { error } = await supabase.from("consultas").delete().eq("id", consultaId);
       if (error) throw error;
-
-      // Atualiza a lista local removendo a consulta deletada
       setConsultas(consultas.filter(c => c.id !== consultaId));
-
-      toast({
-        title: "Consulta excluida",
-        description: "A consulta foi removida do seu historico.",
-      });
+      toast({ title: "Excluída", description: "Consulta removida do histórico." });
     } catch (error) {
-      console.error("Erro ao excluir consulta:", error);
-      toast({
-        title: "Erro ao excluir",
-        description: "Nao foi possivel excluir a consulta. Tente novamente.",
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: "Não foi possível excluir.", variant: "destructive" });
     }
+  };
+
+  // Busca flexível: tenta exato, sem barra, com barra, e parcial
+  const buscarRadar = async (serie: string) => {
+    const s = serie.trim();
+    // 1. Busca exata
+    let { data } = await supabase.from("radares").select("*").eq("numero_serie", s);
+    if (data && data.length > 0) return data;
+    // 2. Sem barras/espaços/hífens
+    const limpo = s.replace(/[\/ \-]/g, "");
+    ({ data } = await supabase.from("radares").select("*").ilike("numero_serie", `%${limpo}%`));
+    if (data && data.length > 0) return data;
+    // 3. Com barra no meio (ex: 1506161782 → 150616/1782)
+    if (limpo.length >= 6) {
+      const comBarra = limpo.slice(0, 6) + "/" + limpo.slice(6);
+      ({ data } = await supabase.from("radares").select("*").eq("numero_serie", comBarra));
+      if (data && data.length > 0) return data;
+    }
+    // 4. Busca parcial
+    ({ data } = await supabase.from("radares").select("*").ilike("numero_serie", `%${s}%`).limit(5));
+    return data || [];
   };
 
   const handleRetryConsulta = async (consulta: Consulta) => {
-    // Adicionar ao set de consultas sendo retentadas
     setRetryingConsultas(prev => new Set(prev).add(consulta.id));
-
     try {
-      toast({
-        title: "Tentando novamente...",
-        description: "Refazendo a consulta no Inmetro",
-      });
-
-      // Chamar edge function com os mesmos dados
-      const { data, error } = await supabase.functions.invoke('consultar-inmetro', {
-        body: {
-          numeroSerie: consulta.numero_serie,
-          numeroAuto: consulta.numero_auto,
-          dataInfracao: consulta.data_infracao,
-          localInfracao: consulta.local_infracao,
-          nomeCondutor: consulta.nome_condutor,
-          cpfCnpjCondutor: consulta.cpf_cnpj_condutor,
-          nomeProprietario: consulta.nome_proprietario,
-          cpfCnpjProprietario: consulta.cpf_cnpj_proprietario,
-        }
-      });
-
-      if (error) throw error;
-
-      // Atualizar a consulta existente com novo resultado
-      const { error: updateError } = await supabase
-        .from('consultas')
-        .update({
-          resultado: data,
-        })
-        .eq('id', consulta.id);
-
-      if (updateError) throw updateError;
-
-      // Atualizar estado local
-      setConsultas(prev => prev.map(c =>
-        c.id === consulta.id
-          ? { ...c, resultado: data }
-          : c
-      ));
-
-      if (data.status_aprovado === false && data.mensagem?.includes("Nao foi possivel")) {
-        toast({
-          title: "Consulta ainda com erro",
-          description: "A API do Inmetro continua indisponivel. Tente novamente mais tarde.",
-          variant: "destructive",
-        });
-      } else if (data.status_aprovado) {
-        toast({
-          title: "Consulta bem-sucedida!",
-          description: "O radar esta aprovado pelo Inmetro",
-        });
-      } else {
-        toast({
-          title: "Consulta bem-sucedida!",
-          description: "O radar NAO esta aprovado pelo Inmetro",
-        });
-      }
-
+      const radares = await buscarRadar(consulta.numero_serie);
+      const resultado = radares.length > 0
+        ? { status_aprovado: radares[0].status_aprovado, numero_certificado: radares[0].numero_certificado, data_certificado: radares[0].data_certificado, validade_certificado: radares[0].validade_certificado, mensagem: radares[0].mensagem }
+        : { status_aprovado: false, mensagem: "Radar não encontrado" };
+      await supabase.from('consultas').update({ resultado }).eq('id', consulta.id);
+      setConsultas(prev => prev.map(c => c.id === consulta.id ? { ...c, resultado } : c));
+      toast({ title: "Atualizada", description: resultado.mensagem || "Consulta refeita" });
     } catch (error) {
-      console.error('Erro ao refazer consulta:', error);
-      toast({
-        title: "Erro ao tentar novamente",
-        description: "Nao foi possivel refazer a consulta. Tente mais tarde.",
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: "Não foi possível refazer.", variant: "destructive" });
     } finally {
-      // Remover do set de consultas sendo retentadas
-      setRetryingConsultas(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(consulta.id);
-        return newSet;
-      });
+      setRetryingConsultas(prev => { const s = new Set(prev); s.delete(consulta.id); return s; });
     }
   };
 
-  const stats = {
-    total: consultas.length,
-    aprovados: consultas.filter((c) => c.resultado?.status_aprovado).length,
-    naoAprovados: consultas.filter((c) => !c.resultado?.status_aprovado).length,
+  const handleConsultar = async () => {
+    if (!numeroSerie.trim()) {
+      toast({ title: "Campo obrigatório", description: "Digite o número de série do radar", variant: "destructive" });
+      return;
+    }
+    await checkLimit();
+    if (limit && !limit.pode_consultar) {
+      setShowUpgradeModal(true);
+      return;
+    }
+    setIsConsultando(true);
+    setResultadoConsulta(null);
+    try {
+      const radares = await buscarRadar(numeroSerie);
+
+      let resultado: any;
+      if (radares.length > 0) {
+        const r = radares[0];
+        let validadeVencida = false;
+        if (r.validade_certificado) {
+          const p = r.validade_certificado.split("/");
+          if (p.length === 3) validadeVencida = new Date(Number(p[2]), Number(p[1]) - 1, Number(p[0])) < new Date();
+        }
+        const estaRegular = r.status_aprovado && !validadeVencida;
+        resultado = {
+          status_aprovado: estaRegular,
+          numero_certificado: r.numero_certificado || "",
+          data_certificado: r.data_certificado || "",
+          validade_certificado: r.validade_certificado || "",
+          mensagem: !r.status_aprovado ? "Instrumento NÃO está aprovado pelo Inmetro."
+            : validadeVencida ? `Certificação VENCIDA desde ${r.validade_certificado}.`
+            : `Aprovado. Válido até ${r.validade_certificado}.`,
+          numero_serie: numeroSerie.trim(),
+          uf: r.uf, municipio: r.municipio, validade_vencida: validadeVencida,
+        };
+      } else {
+        resultado = { status_aprovado: false, mensagem: "Radar não encontrado na base de dados.", numero_serie: numeroSerie.trim(), validade_vencida: false };
+      }
+
+      // Salvar consulta no histórico
+      if (user) {
+        await supabase.from("consultas").insert({
+          user_id: user.id,
+          numero_serie: numeroSerie.trim(),
+          resultado: { status_aprovado: resultado.status_aprovado, numero_certificado: resultado.numero_certificado, data_certificado: resultado.data_certificado, validade_certificado: resultado.validade_certificado, mensagem: resultado.mensagem },
+        });
+        await incrementUsage(false);
+        await loadConsultas(user.id);
+      }
+
+      setResultadoConsulta(resultado);
+      toast({ title: "Consulta realizada", description: resultado.mensagem });
+    } catch (error: any) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    } finally {
+      setIsConsultando(false);
+    }
   };
 
   return (
-    <div className="min-h-screen gradient-hero bg-grid-pattern relative">
-      {/* Ambient glow */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-[40%] -right-[20%] w-[60%] h-[60%] rounded-full bg-primary/[0.04] blur-[120px]" />
-        <div className="absolute -bottom-[30%] -left-[15%] w-[50%] h-[50%] rounded-full bg-accent/[0.03] blur-[100px]" />
-      </div>
-
-      {/* Header */}
-      <motion.header
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="sticky top-0 z-50 glass-strong shadow-medium"
-      >
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/")}
-                className="text-muted-foreground hover:text-foreground hover:bg-white/[0.06]"
-              >
-                <Home className="w-4 h-4 mr-2" />
-                Inicio
-              </Button>
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-primary shadow-glow">
-                  <Shield className="h-5 w-5 text-primary-foreground" />
-                </div>
-                <div>
-                  <h1 className="font-display text-xl font-bold text-foreground tracking-tight">Dashboard</h1>
-                  <p className="text-xs text-muted-foreground font-body">Suas consultas e historico</p>
-                </div>
-              </div>
+    <div className="min-h-screen bg-background">
+      {/* Header simples */}
+      <header className="bg-white border-b border-border">
+        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-500">
+              <CircleCheckBig className="h-5 w-5 text-white" />
             </div>
-            <div className="flex items-center gap-2">
-              {isAdmin && (
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => navigate("/admin")}
-                  className="bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-700 hover:to-amber-600 border-0 shadow-soft"
-                >
-                  <Shield className="w-4 h-4 mr-2" />
-                  Admin
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/planos")}
-                className="hidden md:flex text-muted-foreground hover:text-primary hover:bg-primary/[0.08]"
-              >
-                <Crown className="w-4 h-4 mr-2 text-primary" />
-                {limit?.plano || "Gratuito"}
+            <span className="font-display font-bold text-foreground">RadarCheck</span>
+          </div>
+          <div className="flex items-center gap-1">
+            {isAdmin && (
+              <Button variant="ghost" size="sm" onClick={() => navigate("/admin")} className="text-amber-600">
+                <Crown className="w-4 h-4 mr-1" />
+                Admin
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/perfil")}
-                className="text-muted-foreground hover:text-foreground hover:bg-white/[0.06]"
-              >
-                <User className="w-4 h-4 mr-2" />
-                Perfil
-              </Button>
-              <Button
-                onClick={handleLogout}
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground hover:text-red-400 hover:bg-red-500/[0.08]"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Sair
-              </Button>
-            </div>
+            )}
+            <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
+              <Home className="w-4 h-4" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
+              <LogOut className="w-4 h-4" />
+            </Button>
           </div>
         </div>
-      </motion.header>
+      </header>
 
-      <div className="container mx-auto px-4 py-8 relative z-10">
-        <motion.div variants={stagger} initial="hidden" animate="show">
-
-          {/* Usage Stats Card */}
-          {limit && (
-            <motion.div variants={fadeUp} className="mb-8">
-              <div className="glass rounded-2xl shadow-medium border border-primary/20 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/[0.06] to-accent/[0.04] rounded-2xl pointer-events-none" />
-                <div className="relative p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl gradient-accent shadow-glow">
-                        <Zap className="h-6 w-6 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="font-display font-semibold text-lg text-foreground">Plano {limit.plano}</h3>
-                        <p className="text-sm text-muted-foreground font-body">
-                          {limit.limite_mensal === -1 ? (
-                            "Consultas ilimitadas este mes"
-                          ) : (
-                            <>
-                              {limit.consultas_usadas} de {limit.limite_mensal} consultas usadas este mes
-                            </>
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      onClick={() => navigate("/planos")}
-                      className="hidden md:flex gradient-primary text-primary-foreground border-0 hover:opacity-90 shadow-glow transition-all duration-300"
-                    >
-                      <Crown className="w-4 h-4 mr-2" />
-                      Fazer Upgrade
-                    </Button>
-                  </div>
-                  {/* Progress bar */}
-                  {limit.limite_mensal !== -1 && (
-                    <div className="mt-4">
-                      <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-                        <motion.div
-                          className="h-full rounded-full gradient-accent"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${Math.min((limit.consultas_usadas / limit.limite_mensal) * 100, 100)}%` }}
-                          transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Stats Cards */}
-          <div className="grid gap-6 md:grid-cols-3 mb-8">
-            <motion.div variants={fadeUp}>
-              <div className="glass rounded-2xl shadow-soft p-6 group hover:shadow-glow transition-all duration-500 border border-white/[0.06] hover:border-primary/30">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm font-medium text-muted-foreground font-body">Total de Consultas</span>
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
-                    <FileText className="h-4 w-4 text-primary" />
-                  </div>
-                </div>
-                <p className="stat-number text-foreground group-hover:text-primary transition-colors duration-300">{stats.total}</p>
-              </div>
-            </motion.div>
-
-            <motion.div variants={fadeUp}>
-              <div className="glass rounded-2xl shadow-soft p-6 group hover:shadow-glow transition-all duration-500 border border-white/[0.06] hover:border-green-500/30"
-                   style={{ "--tw-shadow-color": "rgba(34, 197, 94, 0.15)" } as React.CSSProperties}>
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm font-medium text-muted-foreground font-body">Radares Aprovados</span>
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-green-500/10">
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  </div>
-                </div>
-                <p className="stat-number text-green-600">{stats.aprovados}</p>
-              </div>
-            </motion.div>
-
-            <motion.div variants={fadeUp}>
-              <div className="glass rounded-2xl shadow-soft p-6 group hover:shadow-glow transition-all duration-500 border border-white/[0.06] hover:border-red-500/30"
-                   style={{ "--tw-shadow-color": "rgba(239, 68, 68, 0.15)" } as React.CSSProperties}>
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm font-medium text-muted-foreground font-body">Radares Nao Aprovados</span>
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-500/10">
-                    <AlertTriangle className="h-4 w-4 text-red-400" />
-                  </div>
-                </div>
-                <p className="stat-number text-red-400">{stats.naoAprovados}</p>
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Consultas List */}
-          <motion.div variants={fadeUp}>
-            <div className="glass-strong rounded-2xl shadow-strong overflow-hidden">
-              <div className="p-6 border-b border-white/[0.06]">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                    <Activity className="h-4 w-4 text-primary" />
-                  </div>
-                  <h2 className="font-display text-lg font-semibold text-foreground">Historico de Consultas</h2>
-                </div>
-              </div>
-              <div className="p-6">
-                {isLoading ? (
-                  <div className="text-center py-16">
-                    <div className="inline-flex items-center gap-3 text-muted-foreground">
-                      <RefreshCw className="h-5 w-5 animate-spin text-primary" />
-                      <span className="font-body">Carregando consultas...</span>
-                    </div>
-                  </div>
-                ) : consultas.length === 0 ? (
-                  <div className="text-center py-16">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/[0.04] mx-auto mb-4">
-                      <AlertTriangle className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                    <p className="text-muted-foreground mb-6 font-body">
-                      Voce ainda nao realizou nenhuma consulta
-                    </p>
-                    <Button
-                      onClick={() => navigate("/")}
-                      className="gradient-primary text-primary-foreground border-0 shadow-glow hover:opacity-90 transition-all"
-                    >
-                      Fazer primeira consulta
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {consultas.map((consulta, index) => {
-                      const isError = consulta.resultado?.mensagem?.includes("Nao foi possivel completar a consulta");
-                      const isApproved = consulta.resultado?.status_aprovado;
-
-                      return (
-                        <motion.div
-                          key={consulta.id}
-                          initial={{ opacity: 0, y: 12 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.04, duration: 0.4 }}
-                          className={`glass rounded-xl p-5 transition-all duration-300 hover:shadow-medium group ${
-                            isError
-                              ? "border-yellow-500/20 hover:border-yellow-500/40"
-                              : isApproved
-                              ? "border-green-500/15 hover:border-green-500/30"
-                              : "border-red-500/15 hover:border-red-500/30"
-                          }`}
-                        >
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="space-y-3 flex-1 min-w-0">
-                              <div className="flex items-center gap-3">
-                                {/* Status dot */}
-                                <div className={`flex-shrink-0 h-3 w-3 rounded-full ${
-                                  isError
-                                    ? "bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.5)]"
-                                    : isApproved
-                                    ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"
-                                    : "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]"
-                                }`} />
-                                <div className="min-w-0">
-                                  <p className="font-display font-semibold text-lg text-foreground truncate">
-                                    Radar #{consulta.numero_serie}
-                                  </p>
-                                  {isError ? (
-                                    <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
-                                      Erro na Consulta - Tente novamente
-                                    </span>
-                                  ) : (
-                                    <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full ${
-                                      isApproved
-                                        ? "bg-green-500/10 text-green-600 border border-green-500/20"
-                                        : "bg-red-500/10 text-red-400 border border-red-500/20"
-                                    }`}>
-                                      {isApproved ? "Aprovado" : "Nao Aprovado"}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-sm font-body">
-                                {consulta.numero_auto && (
-                                  <div>
-                                    <span className="text-muted-foreground">Auto:</span>{" "}
-                                    <span className="font-medium text-foreground/90">{consulta.numero_auto}</span>
-                                  </div>
-                                )}
-                                {consulta.data_infracao && (
-                                  <div>
-                                    <span className="text-muted-foreground">Data:</span>{" "}
-                                    <span className="font-medium text-foreground/90">
-                                      {new Date(consulta.data_infracao).toLocaleDateString("pt-BR")}
-                                    </span>
-                                  </div>
-                                )}
-                                {consulta.local_infracao && (
-                                  <div className="sm:col-span-2">
-                                    <span className="text-muted-foreground">Local:</span>{" "}
-                                    <span className="font-medium text-foreground/90">{consulta.local_infracao}</span>
-                                  </div>
-                                )}
-                                <div className="sm:col-span-2">
-                                  <span className="text-muted-foreground">Consultado em:</span>{" "}
-                                  <span className="font-medium text-foreground/90">
-                                    {new Date(consulta.created_at).toLocaleString("pt-BR")}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0">
-                              {/* Retry button - only shows on technical errors */}
-                              {consulta.resultado?.mensagem?.includes("Nao foi possivel completar a consulta") && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleRetryConsulta(consulta)}
-                                  disabled={retryingConsultas.has(consulta.id)}
-                                  className="text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10 border border-yellow-500/20"
-                                >
-                                  {retryingConsultas.has(consulta.id) ? (
-                                    <>
-                                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                                      <span className="hidden sm:inline">Consultando...</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <RefreshCw className="w-4 h-4 mr-2" />
-                                      <span className="hidden sm:inline">Tentar Novamente</span>
-                                    </>
-                                  )}
-                                </Button>
-                              )}
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleGerarRecurso(consulta)}
-                                className="text-primary hover:text-primary hover:bg-primary/10 border border-primary/20"
-                              >
-                                <Download className="w-4 h-4 mr-2" />
-                                <span className="hidden sm:inline">Gerar Recurso</span>
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteConsulta(consulta.id)}
-                                className="text-muted-foreground hover:text-red-400 hover:bg-red-500/10"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+      <div className="max-w-2xl mx-auto px-4 py-6">
+        {/* Consulta */}
+        <Card className="bg-white border-border mb-6">
+          <CardContent className="p-4">
+            <Label htmlFor="serie" className="text-sm font-medium text-foreground">Consultar radar</Label>
+            <div className="flex gap-2 mt-1.5">
+              <Input
+                id="serie"
+                placeholder="Número de série do radar"
+                value={numeroSerie}
+                onChange={(e) => setNumeroSerie(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleConsultar()}
+                className="h-10 bg-secondary/30 border-border"
+              />
+              <Button
+                onClick={handleConsultar}
+                disabled={isConsultando || !numeroSerie.trim()}
+                className="h-10 px-5 gradient-primary text-white border-0 shrink-0"
+              >
+                {isConsultando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+              </Button>
             </div>
-          </motion.div>
+            {limit && !limit.pode_consultar && (
+              <p className="text-xs text-red-500 mt-2">Você atingiu o limite de consultas do plano gratuito.</p>
+            )}
 
-        </motion.div>
+            {/* Resultado inline */}
+            {resultadoConsulta && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                className="mt-4 pt-4 border-t border-border"
+              >
+                <div className="flex items-start gap-3">
+                  <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                    resultadoConsulta.status_aprovado ? 'bg-green-50' : resultadoConsulta.validade_vencida ? 'bg-amber-50' : 'bg-red-50'
+                  }`}>
+                    {resultadoConsulta.status_aprovado ? <CheckCircle2 className="h-5 w-5 text-green-600" /> :
+                     resultadoConsulta.validade_vencida ? <AlertTriangle className="h-5 w-5 text-amber-500" /> :
+                     <XCircle className="h-5 w-5 text-red-500" />}
+                  </div>
+                  <div>
+                    <p className={`font-display font-semibold text-sm ${
+                      resultadoConsulta.status_aprovado ? 'text-green-700' : resultadoConsulta.validade_vencida ? 'text-amber-600' : 'text-red-600'
+                    }`}>
+                      {resultadoConsulta.status_aprovado ? "Radar Aprovado" : resultadoConsulta.validade_vencida ? "Certificação Vencida" : "Radar Irregular"}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{resultadoConsulta.mensagem}</p>
+                    {resultadoConsulta.uf && (
+                      <p className="text-xs text-muted-foreground mt-0.5">{resultadoConsulta.municipio} - {resultadoConsulta.uf}</p>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Título histórico */}
+        <h2 className="font-display text-lg font-bold text-foreground mb-4">Histórico</h2>
+
+        {/* Lista */}
+        {isLoading ? (
+          <p className="text-center py-16 text-muted-foreground">Carregando...</p>
+        ) : consultas.length === 0 ? (
+          <div className="text-center py-16">
+            <Search className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" />
+            <p className="text-muted-foreground mb-4">Nenhuma consulta ainda</p>
+            <p className="text-sm text-muted-foreground">Use o campo acima para consultar</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {consultas.map((consulta, i) => {
+              const isErro = consulta.resultado?.mensagem?.includes("Não foi possível");
+              const isAprovado = consulta.resultado?.status_aprovado && !isErro;
+
+              return (
+                <motion.div
+                  key={consulta.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.03 }}
+                >
+                  <Card className="bg-white border-border overflow-hidden">
+                    {/* Faixa de cor no topo */}
+                    <div className={`h-1 ${isErro ? 'bg-amber-400' : isAprovado ? 'bg-green-500' : 'bg-red-500'}`} />
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3">
+                        {/* Ícone */}
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                          isErro ? 'bg-amber-50' : isAprovado ? 'bg-green-50' : 'bg-red-50'
+                        }`}>
+                          {isErro ? <AlertCircle className="h-5 w-5 text-amber-500" /> :
+                           isAprovado ? <CheckCircle2 className="h-5 w-5 text-green-600" /> :
+                           <XCircle className="h-5 w-5 text-red-500" />}
+                        </div>
+
+                        {/* Conteúdo */}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-display font-semibold text-foreground text-sm">
+                            Radar {consulta.numero_serie}
+                          </p>
+                          <p className={`text-xs font-medium ${
+                            isErro ? 'text-amber-600' : isAprovado ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {isErro ? "Erro na consulta" : isAprovado ? "Aprovado" : "Irregular"}
+                          </p>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                            <Clock className="w-3 h-3" />
+                            {new Date(consulta.created_at).toLocaleDateString("pt-BR")}
+                          </p>
+                        </div>
+
+                        {/* Ações */}
+                        <div className="flex items-center gap-0.5">
+                          {isErro && (
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-500" onClick={() => handleRetryConsulta(consulta)} disabled={retryingConsultas.has(consulta.id)}>
+                              <RefreshCw className={`w-4 h-4 ${retryingConsultas.has(consulta.id) ? 'animate-spin' : ''}`} />
+                            </Button>
+                          )}
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => handleGerarRecurso(consulta)}>
+                            <Download className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-red-500" onClick={() => handleDeleteConsulta(consulta.id)}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Recurso Generator Modal */}
+      <UpgradeModal
+        open={showUpgradeModal}
+        onOpenChange={setShowUpgradeModal}
+        currentPlan={limit?.plano || "Gratuito"}
+        usedConsultations={limit?.consultas_usadas || 0}
+        totalConsultations={limit?.limite_mensal || 1}
+      />
+
+      {/* Recurso Generator */}
       {showRecursoGenerator && selectedConsulta && (
         <RecursoGenerator
           data={{
@@ -621,8 +411,7 @@ const Dashboard = () => {
             contato_autuado: profile?.telefone ? `${profile.telefone}${user?.email ? ` / ${user.email}` : ""}` : user?.email || "",
             numero_serie: selectedConsulta.numero_serie,
             marca_modelo: (selectedConsulta as any).radarData
-              ? `${(selectedConsulta as any).radarData.marca || ""} ${(selectedConsulta as any).radarData.modelo || ""}`.trim()
-              : "",
+              ? `${(selectedConsulta as any).radarData.marca || ""} ${(selectedConsulta as any).radarData.modelo || ""}`.trim() : "",
             tipo_instrumento: "Medidor de Velocidade",
             UF: (selectedConsulta as any).radarData?.uf || "",
             cidade: (selectedConsulta as any).radarData?.municipio || "",
@@ -633,10 +422,7 @@ const Dashboard = () => {
             data_recurso: new Date().toLocaleDateString("pt-BR"),
             status_aprovado: selectedConsulta.resultado?.status_aprovado || false,
           }}
-          onClose={() => {
-            setShowRecursoGenerator(false);
-            setSelectedConsulta(null);
-          }}
+          onClose={() => { setShowRecursoGenerator(false); setSelectedConsulta(null); }}
         />
       )}
     </div>

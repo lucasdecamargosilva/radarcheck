@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   CheckCircle2,
   Shield,
+  CircleCheckBig,
   Zap,
   FileCheck,
   Clock,
@@ -60,8 +61,8 @@ const Planos = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3 group">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-primary shadow-glow transition-shadow group-hover:shadow-[0_0_40px_rgba(0,212,255,0.25)]">
-                <Shield className="h-6 w-6 text-white" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500 shadow-glow transition-shadow group-hover:shadow-[0_0_40px_rgba(0,212,255,0.25)]">
+                <CircleCheckBig className="h-6 w-6 text-white" />
               </div>
               <div>
                 <h1 className="font-display text-xl font-bold text-foreground tracking-tight">RadarCheck</h1>
@@ -491,8 +492,8 @@ const Planos = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary">
-                <Shield className="h-5 w-5 text-white" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500">
+                <CircleCheckBig className="h-5 w-5 text-white" />
               </div>
               <span className="font-body text-sm text-muted-foreground">
                 © 2025 RadarCheck - Todos os direitos reservados

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Shield, Mail, ArrowRight, ArrowLeft } from "lucide-react";
+import { CircleCheckBig, Mail, ArrowRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -92,9 +92,9 @@ export default function RecuperarSenha() {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-            className="inline-flex items-center justify-center w-16 h-16 rounded-full glass shadow-glow mb-5"
+            className="inline-flex items-center justify-center w-16 h-16 rounded-lg bg-green-500 shadow-glow mb-5"
           >
-            <Shield className="w-8 h-8 text-primary" />
+            <CircleCheckBig className="w-8 h-8 text-white" />
           </motion.div>
           <h1 className="font-display text-3xl font-bold text-white mb-2">Recuperar Senha</h1>
           <p className="font-body text-sm text-white/40">

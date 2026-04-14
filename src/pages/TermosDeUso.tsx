@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, Shield, FileText } from "lucide-react";
+import { ArrowLeft, CircleCheckBig, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
@@ -119,8 +119,8 @@ export default function TermosDeUso() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3 group">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 group-hover:shadow-glow transition-all duration-300">
-                <Shield className="h-5 w-5 text-primary" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500 group-hover:shadow-glow transition-all duration-300">
+                <CircleCheckBig className="h-5 w-5 text-white" />
               </div>
               <div>
                 <h1 className="text-xl font-bold font-display text-foreground">RadarCheck</h1>
