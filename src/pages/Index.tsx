@@ -818,7 +818,9 @@ const Index = () => {
                     </li>
                   ))}
                 </ul>
-                <Button className="w-full gradient-primary text-primary-foreground border-0 font-semibold" onClick={() => navigate("/planos")}>
+                <Button className="w-full gradient-primary text-primary-foreground border-0 font-semibold" onClick={() => {
+                  document.getElementById('form-consulta')?.scrollIntoView({ behavior: 'smooth' });
+                }}>
                   Gerar recurso – R$ 14,90
                 </Button>
               </Card>
@@ -855,19 +857,6 @@ const Index = () => {
             </motion.div>
           </div>
 
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            className="text-center mt-12"
-          >
-            <Button size="lg" variant="outline" asChild>
-              <Link to="/planos">
-                Ver detalhes dos planos
-                <ChevronRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </motion.div>
         </div>
       </section>
 
