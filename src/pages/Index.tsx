@@ -174,7 +174,7 @@ const Index = () => {
       return;
     }
     setNumeroSerie(searchValue);
-    document.getElementById('form-consulta')?.scrollIntoView({ behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleConsultar = async () => {
@@ -671,7 +671,7 @@ const Index = () => {
             className="text-center mt-12"
           >
             <Button size="lg" className="gradient-primary text-primary-foreground border-0 shadow-glow" onClick={() => {
-              document.getElementById('form-consulta')?.scrollIntoView({ behavior: 'smooth' });
+              window.scrollTo({ top: 0, behavior: 'smooth' });
             }}>
               Fazer consulta gratuita
               <ArrowRight className="ml-2 h-4 w-4" />
@@ -784,8 +784,8 @@ const Index = () => {
                     </li>
                   ))}
                 </ul>
-                <Button className="w-full" variant="outline" onClick={() => { document.getElementById('form-consulta')?.scrollIntoView({ behavior: 'smooth' }); }}>
-                  Usar grátis
+                <Button className="w-full gradient-primary text-white border-0 font-semibold" onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+                  Consultar agora
                 </Button>
               </Card>
             </motion.div>
@@ -818,10 +818,10 @@ const Index = () => {
                     </li>
                   ))}
                 </ul>
-                <Button className="w-full gradient-primary text-primary-foreground border-0 font-semibold" onClick={() => {
-                  document.getElementById('form-consulta')?.scrollIntoView({ behavior: 'smooth' });
+                <Button className="w-full gradient-primary text-white border-0 font-semibold" onClick={() => {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}>
-                  Gerar recurso – R$ 14,90
+                  Consultar agora
                 </Button>
               </Card>
             </motion.div>
@@ -852,7 +852,9 @@ const Index = () => {
                     </li>
                   ))}
                 </ul>
-                <Button className="w-full" variant="outline" disabled>Entrar na lista de espera</Button>
+                <Button className="w-full gradient-primary text-white border-0 font-semibold" onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+                  Consultar agora
+                </Button>
               </Card>
             </motion.div>
           </div>
